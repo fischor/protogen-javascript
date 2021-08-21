@@ -1179,8 +1179,10 @@ export class JSImportPath {
    *
    * Note that for `isModule == true` the resulting import statements
    * won't replace any file extensions like `".d.ts"` or `".ts"`.
+   *
+   * TODO: document that for path is used only if nested imports are necessary
    */
-  constructor(npmModule: string, path: string) {
+  constructor(npmModule: string, path: string = "") {
     this.npmModule = npmModule;
     this.path = path;
   }
