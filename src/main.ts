@@ -890,6 +890,11 @@ export class Field {
   readonly jsonName: string;
 
   /**
+   * Number of the filed.
+   */
+  readonly number: number;
+
+  /**
    * The message this field is defined in.
    */
   readonly parent: Message | null; // nil if top level extension
@@ -965,10 +970,17 @@ export class Field {
     }
     let jsonName = proto.getJsonName() || "";
     this.jsonName = normaliseFieldObjectName(camelCase(jsonName));
+
+    let number = proto.getNumber();
+    if (!number)
+      throw new Error(`field ${this.fullName}: number not populated`);
+    this.number = number;
+
     this.parentFile = parentFile;
     this.parent = parent;
     let protoType = proto.getType();
-    if (!protoType) throw new Error("kind not populated");
+    if (!protoType)
+      throw new Error(`field {this.fullName}: type not populated`);
     this.kind = kind(protoType);
     this.oneof = oneof;
     this.location = findLocation(parentFile.proto, path);
@@ -985,7 +997,7 @@ export class Field {
         break;
       default:
         throw new Error(
-          `Field: ${name}: unrecognized label ${proto.getLabel()}`
+          `field ${this.fullName}: unrecognized label ${proto.getLabel()}`
         );
     }
   }
