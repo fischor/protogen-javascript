@@ -1,0 +1,25 @@
+export { Options, Plugin, GeneratedFile } from "./plugin";
+export type { Extension } from "./main";
+export {
+  Cardinality,
+  Enum,
+  EnumOptions,
+  EnumValue,
+  EnumValueOptions,
+  Field,
+  FieldOptions,
+  File,
+  FileOptions,
+  JSIdent,
+  JSImportPath,
+  Kind,
+  Location,
+  Message,
+  MessageOptions,
+  Method,
+  MethodOptions,
+  Oneof,
+  OneofOptions,
+  Service,
+  ServiceOptions,
+} from "./main";

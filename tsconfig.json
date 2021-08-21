@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "declaration": true,
+    "baseUrl": ".",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "preserveConstEnums": true,
+    "preserveSymlinks": true,
+    "outDir": "./lib",
+    "resolveJsonModule": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["node"],
+    "paths": {
+      "protogen": ["src"],
+    }
+  },
+  "include": ["src", "test"],
+  "exclude": ["node_modules", "lib", "src/gateway"]
+}
