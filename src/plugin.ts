@@ -1,29 +1,13 @@
+import * as path from "path";
 import {
   CodeGeneratorRequest,
   CodeGeneratorResponse,
 } from "google-protobuf/google/protobuf/compiler/plugin_pb";
 import { Registry } from "./registry";
 import { File, JSIdent, JSImportPath } from "./main";
-import * as path from "path";
-
-function defaultNpmImportFunc(
-  filename: string,
-  protoPackage: string
-): JSImportPath {
-  // if google protobuf
-  let splits = protoPackage.split(".");
-  if (splits.length > 2 && splits[0] == "google" && splits[1] == "protobuf") {
-    return new JSImportPath(
-      "google-protobuf",
-      filename.replace(".proto", "_pb")
-    );
-  }
-  return new JSImportPath("", filename.replace(".proto", "_pb"));
-}
 
 export class Options {
   constructor(
-    private paramFunc: (name: string, value: string) => void = () => {},
     private jsImportFunc: (
       filename: string,
       protoPackage: string
@@ -34,7 +18,7 @@ export class Options {
    * Read the CodeGeneratorRequest from stdin and run f.
    */
   run(f: (plugin: Plugin) => void) {
-    this.onStdin((buf) => {
+    onStdin((buf) => {
       try {
         const arr = new Uint8Array(buf.length);
         arr.set(buf);
@@ -46,21 +30,67 @@ export class Options {
         if (request.getFileToGenerateList().length == 0) {
           throw new Error("no files to generate provided");
         }
-        // TODO(fischor): run paramFunc
-        let params = parseParameterString(request.getParameter());
-
-        // Run the user provided params function.
-        for (let { key, value } of params) {
-          this.paramFunc(key, value);
+        // Parse parameters. These are given as flags to protoc:
+        //
+        //   --plugin_opt=key1=value1
+        //   --plugin_opt=key2=value2,key3=value3
+        //   --plugin_opt=key4,,,
+        //   --plugin_opt=key5:novalue5
+        //   --plugin_out=key6:./path
+        //
+        // Multiple in one protoc call are possible. All `plugin_opt`s are joined
+        // with a "," in the CodeGeneratorRequest. The equal sign actually has no
+        // special meaning, its just a convention.
+        //
+        // The above would result in a parameter string of
+        //
+        //   "key1=value1,key2=value2,key3=value3,key4,,,,key5:novalue5,key6"
+        //
+        // (ignoring the order).
+        //
+        // Follow the convention of parameters pairs separated by commans in the
+        // form {k}={v}. If {k} (without value), write an empty string to the
+        // parameter dict. For {k}={v}={v2} write {k} as key and {v}={v2} as
+        // value.
+        let params: Map<string, string> = new Map();
+        let paramString = request.getParameter();
+        if (paramString) {
+          for (let param of paramString.split(",")) {
+            if (param == "") {
+              // Ignore empty parameters.
+              continue;
+            }
+            let split = param.split("=", 2);
+            if (split.length == 1) {
+              params.set(split[0], "");
+            } else {
+              params.set(split[0], split[1]);
+            }
+          }
         }
 
-        const plugin = new Plugin(request, this.jsImportFunc);
+        // Resolve descriptors in CodeGeneratorRequest to their corresponding
+        // protogen classes.
+        let registry = new Registry();
+        let filesToGenerate: File[] = [];
+        for (let fileProto of request.getProtoFileList()) {
+          let fileName = fileProto.getName();
+          if (fileName == null) {
+            throw new Error("Filename not set");
+          }
+          let generate = request.getFileToGenerateList().includes(fileName);
+          let file = new File(fileProto, generate, this.jsImportFunc);
+          file._register(registry);
+          file._resolve(registry);
+          if (generate) {
+            filesToGenerate.push(file);
+          }
+        }
+
+        const plugin = new Plugin(params, filesToGenerate, registry);
 
         let response: CodeGeneratorResponse;
         try {
-          // TODO(fischor): do something with the params: request.getParameter();
-          // Why not use put them on the plugin instead of using this param
-          // function?
           f(plugin);
           response = plugin.response();
         } catch (e) {
@@ -81,74 +111,57 @@ export class Options {
       }
     });
   }
+}
 
-  private onStdin(f: (buffer: Buffer) => void) {
-    const buffers: Buffer[] = [];
-    let totalLength = 0;
+function onStdin(f: (buffer: Buffer) => void) {
+  const buffers: Buffer[] = [];
+  let totalLength = 0;
 
-    // @ts-ignore
-    const stdin = process.stdin;
-    stdin.on("readable", function () {
-      let chunk;
+  // @ts-ignore
+  const stdin = process.stdin;
+  stdin.on("readable", function () {
+    let chunk;
 
-      while ((chunk = stdin.read())) {
-        if (!(chunk instanceof Buffer))
-          throw new Error("Did not receive buffer");
-        buffers.push(chunk);
-        totalLength += chunk.length;
-      }
-    });
+    while ((chunk = stdin.read())) {
+      if (!(chunk instanceof Buffer)) throw new Error("Did not receive buffer");
+      buffers.push(chunk);
+      totalLength += chunk.length;
+    }
+  });
 
-    stdin.on("end", function () {
-      let buffer = Buffer.concat(buffers, totalLength);
-      f(buffer);
-    });
-  }
+  stdin.on("end", function () {
+    let buffer = Buffer.concat(buffers, totalLength);
+    f(buffer);
+  });
+}
+
+function readStdin(): Promise<Buffer> {
+  return new Promise((resolve, _) => {
+    onStdin((buf) => resolve(buf));
+  });
 }
 
 export class Plugin {
-  /**
-   * The request from protoc read from stdin.
-   */
-  public request: CodeGeneratorRequest;
+  public readonly parameter: Map<string, string>;
 
   /**
    * The set of files that to generate and everything the import. Files appear
    * in topological order, so each file appears before any file that imports it.
    */
-  public filesToGenerate: File[];
+  public readonly filesToGenerate: File[];
 
-  public registry: Registry;
-
-  /**
-   * set of protobuf langeauge features to generate.
-   */
-  public supportedFeatures: number;
+  public readonly registry: Registry;
 
   private generatedFiles: GeneratedFile[] = [];
 
   constructor(
-    request: CodeGeneratorRequest,
-    jsImportFunc: (filename: string, protoPackage: string) => JSImportPath
+    parameter: Map<string, string>,
+    filesToGenerate: File[],
+    registry: Registry
   ) {
-    this.request = request;
-    this.filesToGenerate = [];
-    this.supportedFeatures = 0;
-
-    this.registry = new Registry();
-    for (let fileProto of request.getProtoFileList()) {
-      let fileName = fileProto.getName();
-      if (fileName == null) {
-        throw new Error("Filename not set");
-      }
-      let generate = request.getFileToGenerateList().includes(fileName);
-      let file = new File(fileProto, generate, jsImportFunc);
-      file._register(this.registry);
-      file._resolve(this.registry);
-      if (generate) {
-        this.filesToGenerate.push(file);
-      }
-    }
+    this.parameter = parameter;
+    this.filesToGenerate = filesToGenerate;
+    this.registry = registry;
   }
 
   /**
@@ -230,16 +243,13 @@ export class GeneratedFile {
     if (this.jsImportPath.equals(ident.importPath)) {
       return ident.name;
     }
-    this.addImport(this.jsImportPath);
-    // If its in the same proto package, then no import alias would be
-    // needed.
-    let alias = underscoreImportAlias(this.jsImportPath, ident.importPath);
+    this.addImport(ident.importPath);
+    let alias = aliasImportPath(this.jsImportPath, ident.importPath);
     return `${alias}.${ident.name}`;
   }
 
   private addImport(jsImportPath: JSImportPath): boolean {
-    // Avoid duplicate imports. Check if a similar import
-    // already exists.
+    // Avoid duplicate imports. Check if a equivalent import already exists.
     for (let imp of this.imports) {
       if (imp.equals(jsImportPath)) {
         return false;
@@ -267,15 +277,9 @@ export class GeneratedFile {
     let buf = this.buf;
 
     if (this.importMark > -1) {
-      // Add the import statements to the output buffer.
-      // TODO(fischor): it might be possible that there is a module and a non
-      // module with the same "path". These actually need to generate two
-      // different import aliases. It is not sufficient to do this at this
-      // position, because the `import_alias` function is also used in `g.Q` and
-      // thus it needs to be decided before the imports are added to the buffer.
       let stmts: string[] = [];
       for (let imp of this.imports) {
-        let alias = underscoreImportAlias(this.jsImportPath, imp);
+        let alias = aliasImportPath(this.jsImportPath, imp);
         let path = resolveImport(this.jsImportPath, imp);
         stmts.push(`import * as ${alias} from "${path}";`);
       }
@@ -294,51 +298,56 @@ export class GeneratedFile {
   }
 }
 
-/**
- * Replaces `/`, `.`, `-`, `@` with underscores.
- *
- * Example:
- *  JsImportPath{npmModule: "google-protobuf", "google/protobuf/any_pb"}
- *  --> google_protobuf__google_protobuf_any_pb
- *
- *  JsImportPath{npmModule: "" or same as g, "trainai/cloud/datafactory/v1/datafactory_pb"}
- *  --> trainai_cloud_datafactory_v1_datafactory_pb
- */
-function underscoreImportAlias(
-  g: JSImportPath,
-  jsImportPath: JSImportPath
-): string {
-  let npmModule = "";
-  if (g.npmModule != jsImportPath.npmModule) {
-    npmModule = jsImportPath.npmModule.replace(/[\/@\.-]/g, "_") + "__";
+export function defaultNpmImportFunc(
+  filename: string,
+  protoPackage: string
+): JSImportPath {
+  // if google protobuf
+  let splits = protoPackage.split(".");
+  if (splits.length > 2 && splits[0] == "google" && splits[1] == "protobuf") {
+    return new JSImportPath(
+      filename.replace(".proto", "_pb"),
+      "google-protobuf",
+      filename.replace(".proto", "_pb")
+    );
   }
-  return npmModule + jsImportPath.path.replace(/[\/@\.-]/g, "_");
+  // Else, assume no npm module
+  return new JSImportPath(filename.replace(".proto", "_pb"), "");
+}
+
+// TODO: there are still clashes possible (but unlikely). E.g. the modules
+// "@package/hello" and "package-hello" would get the same alias.
+function aliasImportPath(g: JSImportPath, jsImportPath: JSImportPath): string {
+  // - Replace `/`, `.`, `-`, `@` with underscores.
+  // - For imports from npm modules: separate <npmModule>__<pathUnderModule>
+  // - For relative imports: _<path>
+  if (g.npmModule != jsImportPath.npmModule) {
+    let modulePart = jsImportPath.npmModule
+      .replace(/[\/\.-]/g, "_")
+      .replace(/@/g, "");
+    if (jsImportPath.npmPathUnderModule == "") {
+      return modulePart;
+    }
+    return (
+      modulePart +
+      "__" +
+      jsImportPath.npmPathUnderModule.replace(/[\/@\.-]/g, "_")
+    );
+  }
+  return "_" + jsImportPath.path.replace(/[\/@\.-]/g, "_");
 }
 
 function resolveImport(g: JSImportPath, jsImportPath: JSImportPath): string {
   if (g.npmModule != jsImportPath.npmModule) {
-    return path.join(jsImportPath.npmModule, jsImportPath.path);
+    return path.join(jsImportPath.npmModule, jsImportPath.npmPathUnderModule);
   }
-  // Return the relative path. Note this function is expected to not be
-  // called with identical JSImportPaths.
-  return path.relative(g.path, jsImportPath.path);
-}
-
-type Parameter = { key: string; value: string }[];
-
-function parseParameterString(paramString: string | undefined): Parameter {
-  let params: Parameter = [];
-  if (paramString != undefined) {
-    let paramPairs = paramString.split(",");
-    for (let paramPair of paramPairs) {
-      let split = paramPair.split("=", 2);
-      if (split.length == 1) {
-        // There was no "=" in that paramPair
-        params.push({ key: split[0], value: "" });
-      } else {
-        params.push({ key: split[0], value: split[1] });
-      }
-    }
+  // Note that path.relative(from, to) always expecting a directory as "from".
+  let from = path.dirname(g.path);
+  let relPath = path.relative(from, "./" + jsImportPath.path);
+  // Relative path might look like "google/protobuf/annotations_pb".
+  // Ensure they leading "./".
+  if (!relPath.startsWith(".")) {
+    relPath = "./" + relPath;
   }
-  return params;
+  return relPath;
 }
