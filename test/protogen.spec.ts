@@ -3,7 +3,7 @@ import assert from "assert";
 import { execSync } from "child_process";
 import { readFileSync } from "fs";
 
-describe("the test generator", () => {
+describe("the yaml test generator", () => {
     it("should generate the golden output", async () => {
 
         // Throws error is exit code is not 0.
