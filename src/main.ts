@@ -890,6 +890,11 @@ export class Field {
   readonly jsonName: string;
 
   /**
+   * Number of the filed.
+   */
+  readonly number: number;
+
+  /**
    * The message this field is defined in.
    */
   readonly parent: Message | null; // nil if top level extension
@@ -965,10 +970,17 @@ export class Field {
     }
     let jsonName = proto.getJsonName() || "";
     this.jsonName = normaliseFieldObjectName(camelCase(jsonName));
+
+    let number = proto.getNumber();
+    if (!number)
+      throw new Error(`field ${this.fullName}: number not populated`);
+    this.number = number;
+
     this.parentFile = parentFile;
     this.parent = parent;
     let protoType = proto.getType();
-    if (!protoType) throw new Error("kind not populated");
+    if (!protoType)
+      throw new Error(`field {this.fullName}: type not populated`);
     this.kind = kind(protoType);
     this.oneof = oneof;
     this.location = findLocation(parentFile.proto, path);
@@ -985,7 +997,7 @@ export class Field {
         break;
       default:
         throw new Error(
-          `Field: ${name}: unrecognized label ${proto.getLabel()}`
+          `field ${this.fullName}: unrecognized label ${proto.getLabel()}`
         );
     }
   }
@@ -1137,17 +1149,12 @@ export type Extension = Field;
  * is always a package, and thus to be imported from the node_modules folder, or
  * a file located under the current working directory of the proto complier or
  * and proto plugin.
+ *
+ * You might use any arbitrary module here for the files that you are
+ * going to generate in your codegen.
+ * TODO describe this better.
  */
 export class JSImportPath {
-  /**
-   * The npm module.
-   *
-   * You might use any arbitrary module here for the files that you are
-   * going to generate in your codegen.
-   * TODO describe this better.
-   */
-  public npmModule: string;
-
   /**
    * The path of the module (within the npm module). With .ts or .d.ts ending.
    * If two files are in the same npmModule, this path is used to resolve
@@ -1159,18 +1166,40 @@ export class JSImportPath {
    * directly (in case an index.ts file exports them) and for that same npmModule
    * no code is going to be generated (since then we can not resolve the relative
    * filepath within that module)
+   *
+   * Can be empty if no code generation for this module is expected to happen
+   * and all other files are going to import is via its npm path.
    */
   public path: string;
+
+  /**
+   * The npm module.
+   */
+  public npmModule: string;
+
+  /**
+   * Path relative to the npm module a. E.g. for "google-protobuf/google/protobuf/descriptor_pb"
+   * it would be "google/protobuf/descriptor_pb". Note that often times is the
+   * same as path, however not always.
+   */
+  public npmPathUnderModule: string;
 
   /**
    * Creates a new ImportPath.
    *
    * Note that for `isModule == true` the resulting import statements
    * won't replace any file extensions like `".d.ts"` or `".ts"`.
+   *
+   * TODO: document that for path is used only if nested imports are necessary
    */
-  constructor(npmModule: string, path: string) {
-    this.npmModule = npmModule;
+  constructor(
+    path: string,
+    npmModule: string,
+    npmPathUnderModule: string = ""
+  ) {
     this.path = path;
+    this.npmModule = npmModule;
+    this.npmPathUnderModule = npmPathUnderModule;
   }
 
   ident(name: string): JSIdent {
