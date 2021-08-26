@@ -18,7 +18,7 @@ import {
  * resolution process. It represents a Protobuf file (`.proto` file).
  */
 export class File {
-  /** The raw FileDescriptor of the file . */
+  /** The raw FileDescriptor of the file. */
   readonly proto: descriptor_pb.FileDescriptorProto;
 
   /** Name of the proto file. */
@@ -266,13 +266,28 @@ export class FileOptions {
  * `.proto` file.
  */
 export class Service {
+  /** The raw ServiceDescriptor of the file. */
   readonly proto: descriptor_pb.ServiceDescriptorProto;
+
+  /** Proto name of the service. */
   readonly name: string;
+
+  /** Full proto name of the message. */
   readonly fullName: string;
+
+  /** JavaScript identifier of the service. */
   readonly jsIdent: JSIdent;
+
+  /** The file the service is defined in. */
   readonly parentFile: File;
+
+  /** Service method declarations. */
   readonly methods: Method[] = [];
+
+  /** Options specified on the service. */
   readonly options: ServiceOptions;
+
+  /** Comments associated with the service. */
   readonly location: Location;
 
   constructor(
@@ -1476,3 +1491,4 @@ function normaliseFieldObjectName(name: string): string {
   }
   return name;
 }
+

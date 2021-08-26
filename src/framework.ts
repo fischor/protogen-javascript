@@ -508,6 +508,20 @@ export class JSIdent {
   }
 }
 
+/**
+ * Returns the JavaScript import path for a file.
+ *
+ * Returns the javascript import path for a file following the behaviour of the
+ * offical JavaScript protoc plugi that generated for each input file
+ * `path/to/file.proto` a corresponding "path/to/file_pb.{js,d.ts}" file. This
+ * function is used the the default `js_import_func` parameter in the `Options`
+ * constructor.
+ *
+ * @param filename Filename of the proto file to request the import path for.
+ * @param protoPackage Proto package name of the file to request the import path
+ * for.
+ * @returns The JavaScript import path for the file.
+ */
 export function defaultJSImportFunc(
   filename: string,
   protoPackage: string
