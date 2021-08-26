@@ -441,7 +441,7 @@ export class GeneratedFile {
  *
  * ```typescript
  * import * as protogen from "protogenerate";
- * grpcPkg = protogen.JSImportPath("", "@grpc/grpc-js", "");
+ * grpcPkg = protogen.JSImportPath.npm("@grpc/grpc-js");
  * // g is of type GeneratedFile
  * g.P("class MyService {")
  * g.P("constructor() {")
@@ -456,34 +456,75 @@ export class GeneratedFile {
  * list of `g`.
  */
 export class JSImportPath {
+  _filename: string;
+  _npmPackage: string;
+  _npmPathUnderPackage: string;
+
+  /**
+   * Create a import path for a npm package.
+   *
+   * @param name Name of the npm package.
+   * @param pathUnderModule Optional. The path under the npm package the
+   * module can be imported from. E.g. for the npm package  "google-protobuf" a
+   * `npmPathUnderPackage` of "google/protobuf/timestamp_pb" might be necessary
+   * to import the "Timestamp" identifier as it is not exported in the "main"
+   * file of the "google-protobuf" package.
+   * The complete import path necessary to import the `Timestamp` identifer is
+   * `google-protobuf/google/protobuf/timestamp_pb` as in
+   * `import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";`.
+   * @returns The import path.
+   */
+  static npm(name: string, pathUnderPackage?: string) {
+    return new JSImportPath("", name, pathUnderPackage ?? "");
+  }
+
   /**
    * Create a new JavaScript import path.
    *
-   * @param path The local import path that is the relative path to the module
-   * import path refers to without an extension.
-   * @param npmModule Optional. The npm package name if the import path refers
+   * @param filename The filename of the file to create an import path for.
+   * It must be given as a path relative to the root of the source directory
+   * it the file resides in.
+   * @param npmPackage Optional. The npm package name if the import path refers
    * to a npm package.
-   * @param npmPathUnderModule Optional. The path under the npm package the
+   * @param npmPathUnderPackage Optional. The path under the npm package the
    * module can be imported from. E.g. for the npm package  "google-protobuf" a
    * `npmPathUnderPackage` of "google/protobuf/timestamp_pb" might be necessary
-   * to import any identifiers in the "timestamp_pb.js" module as these are not
-   * exported in the top-level index.js file.
+   * to import the "Timestamp" identifier as it is not exported in the "main"
+   * file of the "google-protobuf" package.
    * The complete import path necessary to import the `Timestamp` identifer is
    * `google-protobuf/google/protobuf/timestamp_pb` as in
    * `import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";`.
    */
   constructor(
-    public readonly path: string,
-    public readonly npmModule: string,
-    public readonly npmPathUnderModule: string = ""
-  ) {}
+    readonly filename: string,
+    readonly npmPackage: string,
+    readonly npmPathUnderPackage: string = ""
+  ) {
+    this._filename = filename;
+    this._npmPackage = npmPackage;
+    this._npmPathUnderPackage = npmPathUnderPackage;
+  }
 
   ident(name: string): JSIdent {
     return new JSIdent(this, name);
   }
 
   equals(other: JSImportPath): boolean {
-    return this.npmModule == other.npmModule && this.path == other.path;
+    return (
+      this.npmPackage == other.npmPackage &&
+      this.npmPathUnderPackage == other.npmPathUnderPackage &&
+      this.filename == other.filename
+    );
+  }
+
+  _filenameWithoutExtension(): string {
+    // Support .d.ts as a special extensions. This would not be recognized
+    // by the path module.
+    if (this.filename.match(/\.d\.ts$/)) {
+      return this.filename.slice(0, -3);
+    }
+    let ext = path.parse(this.filename).ext;
+    return this.filename.slice(0, -ext.length);
   }
 }
 
@@ -530,13 +571,13 @@ export function defaultJSImportFunc(
   let splits = protoPackage.split(".");
   if (splits.length > 2 && splits[0] == "google" && splits[1] == "protobuf") {
     return new JSImportPath(
-      filename.replace(".proto", "_pb"),
+      filename.replace(".proto", "_pb.js"),
       "google-protobuf",
       filename.replace(".proto", "_pb")
     );
   }
   // Else, assume no npm module
-  return new JSImportPath(filename.replace(".proto", "_pb"), "");
+  return new JSImportPath(filename.replace(".proto", "_pb.js"), "");
 }
 
 // TODO: there are still clashes possible (but unlikely). E.g. the modules
@@ -545,31 +586,41 @@ function aliasImportPath(g: JSImportPath, jsImportPath: JSImportPath): string {
   // - Replace `/`, `.`, `-`, `@` with underscores.
   // - For imports from npm modules: separate <npmModule>__<pathUnderModule>
   // - For relative imports: _<path>
-  if (g.npmModule != jsImportPath.npmModule) {
-    let modulePart = jsImportPath.npmModule
+  if (g._npmPackage != jsImportPath._npmPackage) {
+    let packagePart = jsImportPath.npmPackage
       .replace(/[\/\.-]/g, "_")
       .replace(/@/g, "");
-    if (jsImportPath.npmPathUnderModule == "") {
-      return modulePart;
+    if (jsImportPath._npmPathUnderPackage == "") {
+      return packagePart;
     }
     return (
-      modulePart +
+      packagePart +
       "__" +
-      jsImportPath.npmPathUnderModule.replace(/[\/@\.-]/g, "_")
+      jsImportPath._npmPathUnderPackage.replace(/[\/@\.-]/g, "_")
     );
   }
-  return "_" + jsImportPath.path.replace(/[\/@\.-]/g, "_");
+  // A relative import.
+  return (
+    "_" + jsImportPath._filenameWithoutExtension().replace(/[\/@\.-]/g, "_")
+  );
 }
 
 function resolveImport(g: JSImportPath, jsImportPath: JSImportPath): string {
-  if (g.npmModule != jsImportPath.npmModule) {
-    return path.join(jsImportPath.npmModule, jsImportPath.npmPathUnderModule);
+  if (g._npmPackage != jsImportPath.npmPackage) {
+    return path.join(
+      jsImportPath._npmPackage,
+      jsImportPath._npmPathUnderPackage
+    );
   }
+  // A relative import.
   // Note that path.relative(from, to) always expecting a directory as "from".
-  let from = path.dirname(g.path);
-  let relPath = path.relative(from, "./" + jsImportPath.path);
-  // Relative path might look like "google/protobuf/annotations_pb".
-  // Ensure they leading "./".
+  let from = path.dirname(g._filename);
+  let relPath = path.relative(
+    from,
+    "./" + jsImportPath._filenameWithoutExtension()
+  );
+  // relPath path might look like "google/protobuf/annotations_pb".
+  // Ensure they leading "./" in the import.
   if (!relPath.startsWith(".")) {
     relPath = "./" + relPath;
   }

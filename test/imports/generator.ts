@@ -5,18 +5,14 @@ import * as protogen from "../../src";
 //
 // It simply prints all possible import statements.
 
-let packageA = new protogen.JSImportPath("", "@package/hello-world", "");
-let packageB = new protogen.JSImportPath(
-  "",
-  "hallo-welt",
-  "my/awesome/protos_pb"
-);
+let packageA = protogen.JSImportPath.npm("@package/hello-world");
+let packageB = protogen.JSImportPath.npm("hallo-welt", "my/awesome/protos_pb");
 
 new protogen.Options().run((gen: protogen.Plugin) => {
   for (let file of gen.filesToGenerate) {
     let g = gen.newGeneratedFile(
       "imports.txt",
-      new protogen.JSImportPath("imports.txt", "", "")
+      new protogen.JSImportPath("imports.txt", "")
     );
 
     // Trigger an import for each file.
