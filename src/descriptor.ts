@@ -1330,27 +1330,43 @@ export enum Cardinality {
  * ```
  */
 export class Location {
+  /** Name of the file the location is from. */
+  readonly sourceFile: string; // this is not in the Location proto
+
+  /** Identifies which part of the FileDescriptor was defined at the location. */
+  readonly path: number[];
+
+  /**
+   * Comments directly attached (leading) to the location. Not separated with
+   * a blank line.
+   * */
+  readonly leadingComments: string;
+
+  /**
+   * Comments directly attached (leading) to the location. Not separated with
+   * a blank line.
+   * */
+  readonly trailingComments: string;
+
+  /**
+   * Comments that are leading to the current location and detached from it
+   * by at least one blank line.
+   */
+  readonly leadingDetachedComments: string[];
+
   constructor(
-    /** Name of the file the location is from. */
-    public readonly sourceFile: string, // this is not in the Location proto
-    /** Identifies which part of the FileDescriptor was defined at the location. */
-    public readonly path: number[],
-    /**
-     * Comments that are leading to the current location and detached from it
-     * by at least one blank line.
-     */
-    public readonly leadingDetached: string[],
-    /**
-     * Comments directly attached (leading) to the location. Not separated with
-     * a blank line.
-     * */
-    public readonly leading: string,
-    /**
-     * Comments directly attached (leading) to the location. Not separated with
-     * a blank line.
-     * */
-    public readonly trailing: string
-  ) {}
+    sourceFile: string,
+    path: number[],
+    leadingComments: string,
+    trailingComments: string,
+    leadingDetachedComments: string[]
+  ) {
+    this.sourceFile = sourceFile;
+    this.path = path;
+    this.leadingComments = leadingComments;
+    this.trailingComments = trailingComments;
+    this.leadingDetachedComments = leadingDetachedComments;
+  }
 }
 
 /**
@@ -1365,20 +1381,20 @@ function findLocation(
 ): Location {
   let sourceCodeInfo = file.getSourceCodeInfo();
   if (sourceCodeInfo == null) {
-    return new Location("", path, [], "", "");
+    return new Location("", path, "", "", []);
   }
   for (let location of sourceCodeInfo.getLocationList()) {
     if (pathEquals(path, location.getPathList())) {
       return new Location(
         "",
         path,
-        location.getLeadingDetachedCommentsList(),
         location.getLeadingComments() ?? "",
-        location.getTrailingComments() ?? ""
+        location.getTrailingComments() ?? "",
+        location.getLeadingDetachedCommentsList()
       );
     }
   }
-  return new Location("", path, [], "", "");
+  return new Location("", path, "", "", []);
 }
 
 function pathEquals(p: number[], q: number[]): boolean {
@@ -1491,4 +1507,3 @@ function normaliseFieldObjectName(name: string): string {
   }
   return name;
 }
-
