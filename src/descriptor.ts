@@ -112,19 +112,19 @@ export class File {
   }
 
   _register(reg: Registry) {
-    reg.registerFile(this);
+    reg._registerFile(this);
 
     for (let m of this.messages) {
       m._register(reg);
     }
     for (let e of this.enums) {
-      reg.registerEnum(e);
+      reg._registerEnum(e);
     }
     for (let s of this.services) {
       s._register(reg);
     }
     for (let e of this.extensions) {
-      reg.registerExtension(e);
+      reg._registerExtension(e);
     }
   }
 
@@ -315,7 +315,7 @@ export class Service {
   }
 
   _register(reg: Registry) {
-    reg.registerService(this);
+    reg._registerService(this);
   }
 
   _resolve(reg: Registry) {
@@ -632,15 +632,15 @@ export class Message {
   }
 
   _register(reg: Registry) {
-    reg.registerMessage(this);
+    reg._registerMessage(this);
     for (let m of this.messages) {
-      reg.registerMessage(m);
+      reg._registerMessage(m);
     }
     for (let e of this.enums) {
-      reg.registerEnum(e);
+      reg._registerEnum(e);
     }
     for (let e of this.extensions) {
-      reg.registerExtension(e);
+      reg._registerExtension(e);
     }
   }
 

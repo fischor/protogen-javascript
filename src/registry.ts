@@ -17,7 +17,7 @@ export class Registry {
     Extension
   >();
 
-  registerFile(file: File) {
+  _registerFile(file: File) {
     if (this.filesByName.has(file.name)) {
       throw new Error(
         `Failed to register file ${file.name}: already registered.`
@@ -26,7 +26,7 @@ export class Registry {
     this.filesByName.set(file.name, file);
   }
 
-  registerService(service: Service) {
+  _registerService(service: Service) {
     if (this.servicesByName.has(service.fullName)) {
       throw new Error(
         `Failed to register service ${service.fullName}: already registered.`
@@ -35,7 +35,7 @@ export class Registry {
     this.servicesByName.set(service.fullName, service);
   }
 
-  registerEnum(enumType: Enum) {
+  _registerEnum(enumType: Enum) {
     if (this.enumsByName.has(enumType.fullName)) {
       throw new Error(
         `Failed to register enum ${enumType.fullName}: already registered.`
@@ -44,7 +44,7 @@ export class Registry {
     this.enumsByName.set(enumType.fullName, enumType);
   }
 
-  registerMessage(message: Message) {
+  _registerMessage(message: Message) {
     if (this.messagesByName.has(message.fullName)) {
       throw new Error(
         `Failed to register message ${message.fullName}: already registered.`
@@ -53,7 +53,7 @@ export class Registry {
     this.messagesByName.set(message.fullName, message);
   }
 
-  registerExtension(extension: Extension) {
+  _registerExtension(extension: Extension) {
     if (this.extensionsByName.has(extension.fullName)) {
       throw new Error(
         `Failed to register extension ${extension.fullName}: already registered.`
