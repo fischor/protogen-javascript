@@ -1,8 +1,11 @@
 import { Enum, File, Service, Message, Extension } from "./main";
 
 /**
- * A Registry registers all enums and messages for all files a plugin works
- * with.
+ * A registry for protogen types.
+ *
+ * A registry holds referneces to `File`, :`Service`, `Enum`, `Message` and
+ * `Extension` objects that have been resolved within a resolution process (see
+ * {@see Options.run}.
  */
 export class Registry {
   private enumsByName: Map<string, Enum> = new Map<string, Enum>();
@@ -23,13 +26,6 @@ export class Registry {
     this.filesByName.set(file.name, file);
   }
 
-  /**
-   * Register a service
-   *
-   * @param ref: name of the message that scopes the message, "" for top level message
-   *   // TODO(fischor): this must be the full name in order to make resolutions
-   * @param message: the message to register
-   */
   registerService(service: Service) {
     if (this.servicesByName.has(service.fullName)) {
       throw new Error(
@@ -39,12 +35,6 @@ export class Registry {
     this.servicesByName.set(service.fullName, service);
   }
 
-  /**
-   * Register an enum
-   *
-   * @param ref: name of the message that scopes the enum, "" for top level enums
-   * @param enumType: the enum to register
-   */
   registerEnum(enumType: Enum) {
     if (this.enumsByName.has(enumType.fullName)) {
       throw new Error(
@@ -54,9 +44,6 @@ export class Registry {
     this.enumsByName.set(enumType.fullName, enumType);
   }
 
-  /**
-   * Register a message
-   */
   registerMessage(message: Message) {
     if (this.messagesByName.has(message.fullName)) {
       throw new Error(
@@ -75,26 +62,65 @@ export class Registry {
     this.extensionsByName.set(extension.fullName, extension);
   }
 
+  /**
+   * Get a file by its full name.
+   *
+   * @param fullName The full (proto) name of the file to retrieve.
+   * @returns The file or `null` if no file with that name has been registered.
+   */
   fileByName(fullName: string): File | null {
     return this.filesByName.get(fullName) ?? null;
   }
 
+  /**
+   * Get a service by its full name.
+   *
+   * @param fullName The full (proto) name of the service to retrieve.
+   * @returns The service or `null` if no service with that name has been
+   * registered.
+   */
   serviceByName(fullName: string): Service | null {
     return this.servicesByName.get(fullName) ?? null;
   }
 
+  /**
+   * Get a message by its full name.
+   *
+   * @param fullName The full (proto) name of the message to retrieve.
+   * @returns The message or `null` if no message with that name has been
+   * registered.
+   */
   messageByName(fullName: string): Message | null {
     return this.messagesByName.get(fullName) ?? null;
   }
 
+  /**
+   * Get an enum by its full name.
+   *
+   * @param fullName The full (proto) name of the enum to retrieve.
+   * @returns The enum or `null` if no enum with that name has been registered.
+   */
   enumByName(fullName: string): Enum | null {
     return this.enumsByName.get(fullName) ?? null;
   }
 
+  /**
+   * Get an extension by its full name.
+   *
+   * @param fullName The full (proto) name of the extension to retrieve.
+   * @returns The extension or `null` if no extension with that name has been
+   * registered.
+   */
   extensionByName(fullName: string): Extension | null {
     return this.extensionsByName.get(fullName) ?? null;
   }
 
+  /**
+   * Get files by proto package.
+   *
+   * @param protoPackage The proto package to get files for.
+   * @returns The files.
+   */
   filesByPackage(protoPackage: string): File[] {
     let files = [];
     for (let f of this.filesByName.values()) {
@@ -105,6 +131,12 @@ export class Registry {
     return files;
   }
 
+  /**
+   * Get services by proto package.
+   *
+   * @param protoPackage The proto package to get services for.
+   * @returns The services.
+   */
   servicesByPackage(protoPackage: string): Service[] {
     let services = [];
     for (let s of this.servicesByName.values()) {
@@ -115,7 +147,12 @@ export class Registry {
     return services;
   }
 
-  // TODO: top-level-only
+  /**
+   * Get messages by proto package.
+   *
+   * @param protoPackage The proto package to get messages for.
+   * @returns The messages.
+   */
   messagesByPackage(protoPackage: string): Message[] {
     let messages = [];
     for (let m of this.messagesByName.values()) {
@@ -126,7 +163,12 @@ export class Registry {
     return messages;
   }
 
-  // TODO: top-level-only
+  /**
+   * Get enums by proto package.
+   *
+   * @param protoPackage The proto package to get enums for.
+   * @returns The enums.
+   */
   enumsByPackage(protoPackage: string): Enum[] {
     let enums = [];
     for (let e of this.enumsByName.values()) {
@@ -137,7 +179,12 @@ export class Registry {
     return enums;
   }
 
-  // TODO: top-level-only
+  /**
+   * Get extensions by proto package.
+   *
+   * @param protoPackage The proto package to get extensions for.
+   * @returns The extensions.
+   */
   extensionsByPackage(protoPackage: string): Extension[] {
     let extensions = [];
     for (let e of this.extensionsByName.values()) {
@@ -148,51 +195,87 @@ export class Registry {
     return extensions;
   }
 
+  /**
+   * Get all registered files.
+   */
   allFiles(): Iterable<File> {
     return this.filesByName.values();
   }
 
+  /**
+   * Get all registered messages.
+   */
   allMessages(): Iterable<Message> {
     return this.messagesByName.values();
   }
 
+  /**
+   * Get all registered enums.
+   */
   allEnums(): Iterable<Enum> {
     return this.enumsByName.values();
   }
 
+  /**
+   * Get all registered extensions.
+   */
   allExtensions(): Iterable<Extension> {
     return this.extensionsByName.values();
   }
 }
 
 /**
- * If the name starts with a '.' it is fully-qualified. Otherwise, C++ like
- * scoping rules are used to fund the type (i.e. first the nested types
- * within this message are search, then within the parent, on up to the root
- * of the namespace).
+ * Resolve a enum type name with respect to a reference namespace to its
+ * `protogen` type.
  *
- * @param msg: fully-qualified name of the message the searched enum if referenced from
- * @param name: name of the enum as referenced
+ * @param registry The registry where the enum to resolve is registered.
+ * @param reference: The reference namespace.
+ * @param enumType: The enum type name to resolve.
+ * @returns The resolved enum or `null` if the enum type name could not be
+ * resolved.
+ *
+ * If the `enumType` starts with a '.' it is fully-qualified. Otherwise, C++
+ * like scoping rules are used to find the type with respect to the `reference`
+ * namespace. For example, for a reference namespace of
+ * "my.pkg.A.B" and a enum type name of `C`, the registry will searched for an
+ * enum named "my.pkg.A.B.C", "my.pkg.A.C", "my.pkg.C", "my.C" and "C" in that
+ * order. The first found enum will be returned, if any.
  */
 export function resolveEnumTypeName(
-  reg: Registry,
-  ref: string,
+  registry: Registry,
+  reference: string,
   enumType: string
 ) {
   if (enumType.charAt(0) == ".") {
-    return reg.enumByName(enumType.slice(1));
+    return registry.enumByName(enumType.slice(1));
   }
   throw new Error("resolve without dot notation not implemented yet");
 }
 
+/**
+ * Resolve a message type name with respect to a reference namespace to its
+ * `protogen` type.
+ *
+ * @param registry The registry where the message to resolve is registered.
+ * @param reference: The reference namespace.
+ * @param messageType: The message type name to resolve.
+ * @returns The resolved message or `null` if the message type name could not be
+ * resolved.
+ *
+ * If the `messageType` starts with a '.' it is fully-qualified. Otherwise, C++
+ * like scoping rules are used to find the type with respect to the `reference`
+ * namespace. For example, for a reference namespace of
+ * "my.pkg.A.B" and a message type name of `C`, the registry will searched for an
+ * message named "my.pkg.A.B.C", "my.pkg.A.C", "my.pkg.C", "my.C" and "C" in
+ * that order. The first found message will be returned, if any.
+ */
 export function resolveMessageTypeName(
-  reg: Registry,
-  ref: string,
+  registry: Registry,
+  reference: string,
   messageType: string
 ) {
   if (messageType.charAt(0) == ".") {
-    return reg.messageByName(messageType.slice(1));
+    return registry.messageByName(messageType.slice(1));
   }
   throw new Error("resolve without dot notation not implemented yet");
 }
-
