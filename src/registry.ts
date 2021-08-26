@@ -1,4 +1,4 @@
-import { Enum, File, Service, Message, Extension } from "./main";
+import { Enum, File, Service, Message, Extension } from "./descriptor";
 
 /**
  * A registry for protogen types.

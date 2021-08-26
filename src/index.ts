@@ -1,5 +1,12 @@
-export { Options, Plugin, GeneratedFile } from "./plugin";
-export type { Extension } from "./main";
+export {
+  Options,
+  Plugin,
+  GeneratedFile,
+  JSImportPath,
+  JSIdent,
+  defaultJSImportFunc,
+} from "./framework";
+export type { Extension } from "./descriptor";
 export {
   Cardinality,
   Enum,
@@ -10,8 +17,6 @@ export {
   FieldOptions,
   File,
   FileOptions,
-  JSIdent,
-  JSImportPath,
   Kind,
   Location,
   Message,
@@ -22,4 +27,4 @@ export {
   OneofOptions,
   Service,
   ServiceOptions,
-} from "./main";
+} from "./descriptor";

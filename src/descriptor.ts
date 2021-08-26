@@ -2,13 +2,12 @@ import * as descriptor_pb from "google-protobuf/google/protobuf/descriptor_pb";
 // "jspb" is a conventional import name.
 import * as jspb from "google-protobuf";
 
+import { JSIdent, JSImportPath } from "./framework";
 import {
   Registry,
   resolveEnumTypeName,
   resolveMessageTypeName,
 } from "./registry";
-import { findLocation } from "./sourceCodeInfo";
-import { camelCase, normaliseFieldObjectName } from "./util";
 
 /**
  * A proto file.
@@ -19,40 +18,40 @@ import { camelCase, normaliseFieldObjectName } from "./util";
  * resolution process. It represents a Protobuf file (`.proto` file).
  */
 export class File {
-  /* The raw FileDescriptor of the file . */
+  /** The raw FileDescriptor of the file . */
   readonly proto: descriptor_pb.FileDescriptorProto;
 
-  /* Name of the proto file. */
+  /** Name of the proto file. */
   readonly name: string;
 
-  /* Name of the proto package the file belongs to. */
+  /** Name of the proto package the file belongs to. */
   readonly packageName: string;
 
-  /* Proto syntax of the file */
+  /** Proto syntax of the file */
   readonly syntax: string;
 
-  /* JavaScript import path of the file. */
+  /** JavaScript import path of the file. */
   readonly jsImportPath: JSImportPath;
 
-  /* Whether code should be generated for the file. */
+  /** Whether code should be generated for the file. */
   readonly generate: boolean;
 
-  /* Files imported by the file. */
+  /** Files imported by the file. */
   readonly dependencies: File[] = [];
 
-  /* Top-level enum declarations. */
+  /** Top-level enum declarations. */
   readonly enums: Enum[] = [];
 
-  /* Top-level message declarations. */
+  /** Top-level message declarations. */
   readonly messages: Message[] = [];
 
-  /* Service declarations. */
+  /** Service declarations. */
   readonly services: Service[] = [];
 
-  /* Top-level extension declarations. */
+  /** Top-level extension declarations. */
   readonly extensions: Extension[] = [];
 
-  /* Options specified on the file. */
+  /** Options specified on the file. */
   readonly options: FileOptions;
 
   constructor(
@@ -159,64 +158,64 @@ export class File {
  * type for easier access.
  */
 export class FileOptions {
-  /* The raw protobuf MessageOptions. */
+  /** The raw protobuf MessageOptions. */
   proto: descriptor_pb.FileOptions | null;
 
-  /* Value of the `java_package` option if specified. */
+  /** Value of the `java_package` option if specified. */
   javaPackage: string | undefined;
 
-  /* Value of the `java_outer_classname` option if specified. */
+  /** Value of the `java_outer_classname` option if specified. */
   javaOuterClassname: string | undefined;
 
-  /* Value of the `java_multiple_files` option. Defaults to `false`. */
+  /** Value of the `java_multiple_files` option. Defaults to `false`. */
   javaMultipleFiles: boolean;
 
-  /* Value of the `java_string_check_utf8` option. Defaults to `false`. */
+  /** Value of the `java_string_check_utf8` option. Defaults to `false`. */
   javaStringCheckUtf8: boolean;
 
-  /* Value of the `optimize_for` option. Defaults to `OptimizeMode.SPEED`. */
+  /** Value of the `optimize_for` option. Defaults to `OptimizeMode.SPEED`. */
   optimizeFor: descriptor_pb.FileOptions.OptimizeMode;
 
-  /* Value of the `go_package` option if specified. */
+  /** Value of the `go_package` option if specified. */
   goPackage: string | undefined;
 
-  /* Value of the `cc_generic_services` option. Defaults to `false`. */
+  /** Value of the `cc_generic_services` option. Defaults to `false`. */
   ccGenericServices: boolean;
 
-  /* Value of the `java_generic_services` option. Defaults to `false`. */
+  /** Value of the `java_generic_services` option. Defaults to `false`. */
   javaGenericServices: boolean;
 
-  /* Value of the `py_generic_services` option. Defaults to `false`. */
+  /** Value of the `py_generic_services` option. Defaults to `false`. */
   pyGenericServices: boolean;
 
-  /* Value of the `php_generic_services` option. Defaults to `false`. */
+  /** Value of the `php_generic_services` option. Defaults to `false`. */
   phpGenericServices: boolean;
 
-  /* If `true` the file is deprecated. Defaults to `false`. */
+  /** If `true` the file is deprecated. Defaults to `false`. */
   deprecated: boolean;
 
-  /* Value of the `cc_enable_areas` option. Defaults to `true`. */
+  /** Value of the `cc_enable_areas` option. Defaults to `true`. */
   ccEnableArenas: boolean;
 
-  /* Value of the `objc_class_prefix` option if specified. */
+  /** Value of the `objc_class_prefix` option if specified. */
   objcClassPrefix: string | undefined;
 
-  /* Value of the `csharp_namespace` option if specified. */
+  /** Value of the `csharp_namespace` option if specified. */
   csharpNamespace: string | undefined;
 
-  /* Value of the `swift_prefix` option if specified. */
+  /** Value of the `swift_prefix` option if specified. */
   swiftPrefix: string | undefined;
 
-  /* Value of the `php_class_prefix` option if specified. */
+  /** Value of the `php_class_prefix` option if specified. */
   phpClassPrefix: string | undefined;
 
-  /* Value of the `php_namespace` option if specified. */
+  /** Value of the `php_namespace` option if specified. */
   phpNamespace: string | undefined;
 
-  /* Value of the `php_metadata_namespace` option if specified. */
+  /** Value of the `php_metadata_namespace` option if specified. */
   phpMetadataNamespace: string | undefined;
 
-  /* Value of the `ruby_package` option if specified. */
+  /** Value of the `ruby_package` option if specified. */
   rubyPackage: string | undefined;
 
   constructor(proto: descriptor_pb.FileOptions | null) {
@@ -319,10 +318,10 @@ export class Service {
  * type for easier access.
  */
 export class ServiceOptions {
-  /* The raw protobuf ServiceOptions. */
+  /** The raw protobuf ServiceOptions. */
   proto: descriptor_pb.ServiceOptions | null;
 
-  /* If `true` the service is deprecated. Defaults to `false`. */
+  /** If `true` the service is deprecated. Defaults to `false`. */
   deprecated: boolean;
 
   constructor(proto: descriptor_pb.ServiceOptions | null) {
@@ -354,22 +353,22 @@ export class ServiceOptions {
  * Protobuf service definition.
  */
 export class Method {
-  /* The raw MethodDescriptor of the method . */
+  /** The raw MethodDescriptor of the method . */
   readonly proto: descriptor_pb.MethodDescriptorProto;
 
-  /* Proto name of the method. */
+  /** Proto name of the method. */
   readonly name: string;
 
-  /* Full proto name of the method. */
+  /** Full proto name of the method. */
   readonly fullName: string;
 
-  /* Javascript name of the method. A camel cased version of the proto name. */
+  /** Javascript name of the method. A camel cased version of the proto name. */
   readonly jsName: string;
 
-  /* If `true`, the method is a client streaming method. */
+  /** If `true`, the method is a client streaming method. */
   readonly clientStreaming: boolean;
 
-  /* If `true`, the method is a server streaming method. */
+  /** If `true`, the method is a server streaming method. */
   readonly serverStreaming: boolean;
 
   /**
@@ -378,19 +377,19 @@ export class Method {
    */
   readonly grpcPath: string;
 
-  /* The service the method is declared in. */
+  /** The service the method is declared in. */
   readonly parent: Service;
 
-  /* The input message of the method. */
+  /** The input message of the method. */
   readonly input!: Message; // set after resolve
 
-  /* The output message of the method. */
+  /** The output message of the method. */
   readonly output!: Message; // set after resolve
 
-  /* Options specified on the method. */
+  /** Options specified on the method. */
   readonly options: MethodOptions;
 
-  /* Comments associated with the message. */
+  /** Comments associated with the message. */
   readonly location: Location;
 
   constructor(
@@ -440,13 +439,13 @@ export class Method {
  * type for easier access.
  */
 export class MethodOptions {
-  /* The raw protobuf MethodOptions. */
+  /** The raw protobuf MethodOptions. */
   proto: descriptor_pb.MethodOptions | null;
 
-  /* If `true` the method is deprecated. Defaults to `false`. */
+  /** If `true` the method is deprecated. Defaults to `false`. */
   deprecated: boolean;
 
-  /* Idempotency level of the method. Defaults to IDEMPOTENCY_UNKNOWN. */
+  /** Idempotency level of the method. Defaults to IDEMPOTENCY_UNKNOWN. */
   idempotencyLevel: descriptor_pb.MethodOptions.IdempotencyLevel;
 
   constructor(proto: descriptor_pb.MethodOptions | null) {
@@ -480,19 +479,19 @@ export class MethodOptions {
  * process. It represents a Protobuf message defined within an `.proto` file.
  */
 export class Message {
-  /* The raw Descriptor of the message . */
+  /** The raw Descriptor of the message . */
   readonly proto: descriptor_pb.DescriptorProto;
 
-  /* Proto name of the message. */
+  /** Proto name of the message. */
   readonly name: string;
 
-  /* Full proto name of the message. */
+  /** Full proto name of the message. */
   readonly fullName: string;
 
-  /* JavaScript identifier of the message. */
+  /** JavaScript identifier of the message. */
   readonly jsIdent: JSIdent;
 
-  /* The file the message is defined in. */
+  /** The file the message is defined in. */
   readonly parentFile: File;
 
   /**
@@ -501,25 +500,25 @@ export class Message {
    */
   readonly parent: Message | null;
 
-  /* Message field declarations. This includes fields defined within oneofs. */
+  /** Message field declarations. This includes fields defined within oneofs. */
   readonly fields: Field[] = [];
 
-  /* Oneof declarations. */
+  /** Oneof declarations. */
   readonly oneofs: Oneof[] = [];
 
-  /* Nested enum declarations. */
+  /** Nested enum declarations. */
   readonly enums: Enum[] = [];
 
-  /* Nested message declarations. */
+  /** Nested message declarations. */
   readonly messages: Message[] = [];
 
-  /* Nested extension declations. */
+  /** Nested extension declations. */
   readonly extensions: Extension[] = [];
 
-  /* Options specified on the message. */
+  /** Options specified on the message. */
   readonly options: MessageOptions;
 
-  /* Comments associated with the message. */
+  /** Comments associated with the message. */
   readonly location: Location;
 
   constructor(
@@ -663,7 +662,7 @@ export class Message {
  * type for easier access.
  */
 export class MessageOptions {
-  /* The raw protobuf MessageOptions. */
+  /** The raw protobuf MessageOptions. */
   proto: descriptor_pb.MessageOptions | null;
 
   /**
@@ -678,11 +677,11 @@ export class MessageOptions {
    **/
   noStandardDescriptorAccessor: boolean;
 
-  /* If `true` the enum value is deprecated. Defaults to `false`. */
+  /** If `true` the enum value is deprecated. Defaults to `false`. */
   deprecated: boolean;
 
   /** has no default */
-  /* If `true` the message is an autogenerated map. */
+  /** If `true` the message is an autogenerated map. */
   mapEntry: boolean | undefined;
 
   constructor(proto: descriptor_pb.MessageOptions | null) {
@@ -718,31 +717,31 @@ export class MessageOptions {
  * file.
  */
 export class Enum {
-  /* The raw EnumDescriptor of the enum . */
+  /** The raw EnumDescriptor of the enum . */
   readonly proto: descriptor_pb.EnumDescriptorProto;
 
-  /* Proto name of the enum. */
+  /** Proto name of the enum. */
   readonly name: string;
 
-  /* Full proto name of the enum. */
+  /** Full proto name of the enum. */
   readonly fullName: string;
 
-  /* JavaScript identifier of the enum. */
+  /** JavaScript identifier of the enum. */
   readonly jsIdent: JSIdent;
 
-  /* Values of the enum. */
+  /** Values of the enum. */
   readonly values: EnumValue[] = [];
 
-  /* The file the enum is declared in. */
+  /** The file the enum is declared in. */
   readonly parentFile: File;
 
-  /* For nested enums, the message the enum is declared in. `null` otherwise. */
+  /** For nested enums, the message the enum is declared in. `null` otherwise. */
   readonly parent: Message | null;
 
-  /* Options specified on the enum. */
+  /** Options specified on the enum. */
   readonly options: EnumOptions;
 
-  /* Comments associated with the enum. */
+  /** Comments associated with the enum. */
   readonly location: Location;
 
   constructor(
@@ -789,13 +788,13 @@ export class Enum {
  * for easier access.
  */
 export class EnumOptions {
-  /* The raw protobuf EnumOptions. */
+  /** The raw protobuf EnumOptions. */
   proto: descriptor_pb.EnumOptions | null;
 
-  /* If `true` allows mappings from different tag names to the same value. */
+  /** If `true` allows mappings from different tag names to the same value. */
   allowAlias: boolean | undefined;
 
-  /* If `true` the enum value is deprecated. Defaults to `false`. */
+  /** If `true` the enum value is deprecated. Defaults to `false`. */
   deprecated: boolean;
 
   constructor(proto: descriptor_pb.EnumOptions | null) {
@@ -828,10 +827,10 @@ export class EnumOptions {
  * Protobuf enum definition.
  */
 export class EnumValue {
-  /* The raw EnumValueDescriptor of the enum value. */
+  /** The raw EnumValueDescriptor of the enum value. */
   readonly proto: descriptor_pb.EnumValueDescriptorProto;
 
-  /* Proto name of the enum value. */
+  /** Proto name of the enum value. */
   readonly name: string;
 
   /**
@@ -843,16 +842,16 @@ export class EnumValue {
    */
   readonly fullName: string;
 
-  /* The enum number. */
+  /** The enum number. */
   readonly enumNumber: number;
 
-  /* The enum the enum value is declared in. */
+  /** The enum the enum value is declared in. */
   readonly parent: Enum;
 
-  /* Options specified on the enum value. */
+  /** Options specified on the enum value. */
   readonly options: EnumValueOptions;
 
-  /* Comments associated with the enum value. */
+  /** Comments associated with the enum value. */
   readonly location: Location;
 
   constructor(
@@ -892,10 +891,10 @@ export class EnumValue {
  * this type for easier access.
  */
 export class EnumValueOptions {
-  /* The raw protobuf EnumValueOptions. */
+  /** The raw protobuf EnumValueOptions. */
   proto: descriptor_pb.EnumValueOptions | null;
 
-  /* If `true` the enum value is deprecated. Defaults to `false`. */
+  /** If `true` the enum value is deprecated. Defaults to `false`. */
   deprecated: boolean;
 
   constructor(proto: descriptor_pb.EnumValueOptions | null) {
@@ -927,22 +926,22 @@ export class EnumValueOptions {
  * Protobuf message definition.
  */
 export class Oneof {
-  /* The raw OneofDescriptor of the oneof. */
+  /** The raw OneofDescriptor of the oneof. */
   readonly proto: descriptor_pb.OneofDescriptorProto;
 
-  /* Proto name of the oneof. */
+  /** Proto name of the oneof. */
   readonly name: string;
 
-  /* The message the oneof is declared in. */
+  /** The message the oneof is declared in. */
   readonly parent: Message;
 
-  /* Fields that are part of the oneof. */
+  /** Fields that are part of the oneof. */
   readonly fields: Field[] = [];
 
-  /* Options specified on the oneof. */
+  /** Options specified on the oneof. */
   readonly options: OneofOptions;
 
-  /* Comments associated with the oneof. */
+  /** Comments associated with the oneof. */
   readonly location: Location;
 
   constructor(
@@ -971,7 +970,7 @@ export class Oneof {
  * type for easier access.
  */
 export class OneofOptions {
-  /* The raw protobuf OneofOptions. */
+  /** The raw protobuf OneofOptions. */
   proto: descriptor_pb.OneofOptions | null;
 
   constructor(proto: descriptor_pb.OneofOptions | null) {
@@ -1002,34 +1001,34 @@ export class OneofOptions {
  * Protobuf message definition. It is also used to describe protobuf extensions.
  */
 export class Field {
-  /* The raw FieldDescriptor of the field. */
+  /** The raw FieldDescriptor of the field. */
   readonly proto: descriptor_pb.FieldDescriptorProto;
 
-  /* Proto name of the field. */
+  /** Proto name of the field. */
   readonly name: string;
 
-  /* Full proto name of the field. */
+  /** Full proto name of the field. */
   readonly fullName: string;
 
-  /* JSON name of the field. */
+  /** JSON name of the field. */
   readonly jsonName: string;
 
-  /* The field number. */
+  /** The field number. */
   readonly number: number;
 
-  /* The message the field is declared in. Or `null` for top-level extensions. */
+  /** The message the field is declared in. Or `null` for top-level extensions. */
   readonly parent: Message | null;
 
-  /* The file the field is declared in. */
+  /** The file the field is declared in. */
   readonly parentFile: File;
 
-  /* The oneof in case the field is contained in a oneof. `null` otherwise. */
+  /** The oneof in case the field is contained in a oneof. `null` otherwise. */
   readonly oneof: Oneof | null;
 
-  /* The field kind. */
+  /** The field kind. */
   readonly kind: Kind;
 
-  /* Cardinality of the field. */
+  /** Cardinality of the field. */
   readonly cardinality: Cardinality;
 
   /**
@@ -1044,13 +1043,13 @@ export class Field {
    */
   readonly message: Message | null = null; // set after resolve
 
-  /* The extendee in case this is a top-level extension. `null` otherwise. */
+  /** The extendee in case this is a top-level extension. `null` otherwise. */
   readonly extendee: Message | null = null; // set after resolve
 
-  /* Options specified on the field. */
+  /** Options specified on the field. */
   readonly options: FieldOptions;
 
-  /* Comments associated with the field. */
+  /** Comments associated with the field. */
   readonly location: Location;
 
   constructor(
@@ -1205,10 +1204,10 @@ export class Field {
  * type for easier access.
  */
 export class FieldOptions {
-  /* The raw protobuf FieldOptions. */
+  /** The raw protobuf FieldOptions. */
   proto: descriptor_pb.FieldOptions | null;
 
-  /* For C++: representation type of the field. Defaults to CType.STRING. */
+  /** For C++: representation type of the field. Defaults to CType.STRING. */
   ctype: descriptor_pb.FieldOptions.CType;
 
   /**
@@ -1229,10 +1228,10 @@ export class FieldOptions {
    **/
   jstype: descriptor_pb.FieldOptions.JSType;
 
-  /* If `true` the field should be parsed lazily. Defaults to `false`. */
+  /** If `true` the field should be parsed lazily. Defaults to `false`. */
   lazy: boolean;
 
-  /* If `true` the field is deprecated. Defaults to `false`. */
+  /** If `true` the field is deprecated. Defaults to `false`. */
   deprecated: boolean;
 
   constructor(proto: descriptor_pb.FieldOptions | null) {
@@ -1265,76 +1264,6 @@ export class FieldOptions {
  * Protobuf extensions are described using FieldDescriptors. See {@link Field}.
  */
 export type Extension = Field;
-
-/**
- * A JavaScript import path.
- *
- * Represents a JavaScript import path as used in a JavaScript import statement.
- * In JavaScript, the import path is used to identify the module to import. One
- * has to differentiate import paths from a module distributed via npm to import
- * paths pointing to local modules.
- * An import path of "google-protobuf/google/protobuf/timestamp_pb" refers to the
- * module "google/protobuf/timestamp_pb.js" that is part of the "google-protobuf"
- * npm package.
- * An import path of "../mypackage/mymodule" refers the "../mypackage/mymodule.js"
- * module thats present locally with respect to the current module.
- *
- * This is just a simple wrapper class around an import path. It is used in the
- * `GeneratedFile` to keep track of which import statements need to be included
- * in the output of the generated file as well as how a `JSIdent` needs to be
- * referred to in the output the generated file.
- *
- * Example:
- * Use the `JSImportPath` class to take advantage of the import resolution
- * mechanism provided by the `GeneratedFile`.
- *
- * ```typescript
- * import * as protogen from "protogenerate";
- * grpcPkg = protogen.JSImportPath("", "@grpc/grpc-js", "");
- * // g is of type GeneratedFile
- * g.P("class MyService {")
- * g.P("constructor() {")
- * g.P("this.channel = new", grpcPkg.ident("Channel"), "('localhost:9090');")
- * g.P("}")
- * g.P()
- * // ..
- * g.P("}")
- * ```
- *
- * That way the `@grpc/grpc-js` package will be automatically added to the import
- * list of `g`.
- */
-export class JSImportPath {
-  /**
-   * Create a new JavaScript import path.
-   *
-   * @param path The local import path that is the relative path to the module
-   * import path refers to without an extension.
-   * @param npmModule Optional. The npm package name if the import path refers
-   * to a npm package.
-   * @param npmPathUnderModule Optional. The path under the npm package the
-   * module can be imported from. E.g. for the npm package  "google-protobuf" a
-   * `npmPathUnderPackage` of "google/protobuf/timestamp_pb" might be necessary
-   * to import any identifiers in the "timestamp_pb.js" module as these are not
-   * exported in the top-level index.js file.
-   * The complete import path necessary to import the `Timestamp` identifer is
-   * `google-protobuf/google/protobuf/timestamp_pb` as in
-   * `import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";`.
-   */
-  constructor(
-    public readonly path: string,
-    public readonly npmModule: string,
-    public readonly npmPathUnderModule: string = ""
-  ) {}
-
-  ident(name: string): JSIdent {
-    return new JSIdent(this, name);
-  }
-
-  equals(other: JSImportPath): boolean {
-    return this.npmModule == other.npmModule && this.path == other.path;
-  }
-}
 
 /**
  * The Cardinality specifies whether a field is optional, required or repeated.
@@ -1387,9 +1316,9 @@ export enum Cardinality {
  */
 export class Location {
   constructor(
-    /* Name of the file the location is from. */
+    /** Name of the file the location is from. */
     public readonly sourceFile: string, // this is not in the Location proto
-    /* Identifies which part of the FileDescriptor was defined at the location. */
+    /** Identifies which part of the FileDescriptor was defined at the location. */
     public readonly path: number[],
     /**
      * Comments that are leading to the current location and detached from it
@@ -1407,6 +1336,46 @@ export class Location {
      * */
     public readonly trailing: string
   ) {}
+}
+
+/**
+ * Find the comment set for the location specified by path.
+ *
+ * @param path: the location
+ * @returns commentSet: for this position or an empty one if not found
+ */
+function findLocation(
+  file: descriptor_pb.FileDescriptorProto,
+  path: number[]
+): Location {
+  let sourceCodeInfo = file.getSourceCodeInfo();
+  if (sourceCodeInfo == null) {
+    return new Location("", path, [], "", "");
+  }
+  for (let location of sourceCodeInfo.getLocationList()) {
+    if (pathEquals(path, location.getPathList())) {
+      return new Location(
+        "",
+        path,
+        location.getLeadingDetachedCommentsList(),
+        location.getLeadingComments() ?? "",
+        location.getTrailingComments() ?? ""
+      );
+    }
+  }
+  return new Location("", path, [], "", "");
+}
+
+function pathEquals(p: number[], q: number[]): boolean {
+  if (p.length != q.length) {
+    return false;
+  }
+  for (let i = 0; i < p.length; i++) {
+    if (p[i] != q[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -1433,27 +1402,77 @@ export enum Kind {
   Sint64 = 18,
 }
 
-export function kind(n: number): Kind {
+function kind(n: number): Kind {
   return n;
 }
 
-/**
- * An identifier for a JavaScript class, function, variable or constant (or a
- * TypeScript type or interface).
- */
-export class JSIdent {
-  /**
-   * The import path of the identifier.
-   */
-  importPath: JSImportPath;
+function camelCase(s: string): string {
+  return s.replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase());
+}
 
-  /**
-   * Name of the class, function, variable or constant.
-   */
-  name: string;
-
-  constructor(importPath: JSImportPath, name: string) {
-    this.importPath = importPath;
-    this.name = name;
+// normaliseFieldObjectName modifies the field name that appears in the `asObject` representation
+// to match the logic found in `protobuf/compiler/js/js_generator.cc`. See: https://goo.gl/tX1dPQ
+function normaliseFieldObjectName(name: string): string {
+  switch (name) {
+    case "abstract":
+    case "boolean":
+    case "break":
+    case "byte":
+    case "case":
+    case "catch":
+    case "char":
+    case "class":
+    case "const":
+    case "continue":
+    case "debugger":
+    case "default":
+    case "delete":
+    case "do":
+    case "double":
+    case "else":
+    case "enum":
+    case "export":
+    case "extends":
+    case "false":
+    case "final":
+    case "finally":
+    case "float":
+    case "for":
+    case "function":
+    case "goto":
+    case "if":
+    case "implements":
+    case "import":
+    case "in":
+    case "instanceof":
+    case "int":
+    case "interface":
+    case "long":
+    case "native":
+    case "new":
+    case "null":
+    case "package":
+    case "private":
+    case "protected":
+    case "public":
+    case "return":
+    case "short":
+    case "static":
+    case "super":
+    case "switch":
+    case "synchronized":
+    case "this":
+    case "throw":
+    case "throws":
+    case "transient":
+    case "try":
+    case "typeof":
+    case "var":
+    case "void":
+    case "volatile":
+    case "while":
+    case "with":
+      return `pb_${name}`;
   }
+  return name;
 }

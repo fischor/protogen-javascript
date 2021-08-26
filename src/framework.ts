@@ -4,7 +4,7 @@ import {
   CodeGeneratorResponse,
 } from "google-protobuf/google/protobuf/compiler/plugin_pb";
 import { Registry } from "./registry";
-import { File, JSIdent, JSImportPath } from "./main";
+import { File } from "./descriptor";
 
 /**
  * Options for resolving a raw CodeGeneratorRequest to `protogen` classes.
@@ -221,7 +221,6 @@ export class Plugin {
    * @param jsImportPath JavaScript import path of the new generated file. This
    * is used to decide wheter to print the fully qualified name or the simple
    * name for a Python identifier when using `GeneratedFile.P`.
-   * See {@see GeneratedFile}.
    * @returns The new generated file.
    */
   newGeneratedFile(
@@ -267,7 +266,7 @@ export class Plugin {
  * arguments passed to `P`.
  */
 export class GeneratedFile {
-  /* Name of the generated file. */
+  /** Name of the generated file. */
   filename: string;
 
   private buf: string[] = [];
@@ -415,6 +414,97 @@ export class GeneratedFile {
     f.setName(this.filename);
     f.setContent(content);
     return f;
+  }
+}
+
+/**
+ * A JavaScript import path.
+ *
+ * Represents a JavaScript import path as used in a JavaScript import statement.
+ * In JavaScript, the import path is used to identify the module to import. One
+ * has to differentiate import paths from a module distributed via npm to import
+ * paths pointing to local modules.
+ * An import path of "google-protobuf/google/protobuf/timestamp_pb" refers to the
+ * module "google/protobuf/timestamp_pb.js" that is part of the "google-protobuf"
+ * npm package.
+ * An import path of "../mypackage/mymodule" refers the "../mypackage/mymodule.js"
+ * module thats present locally with respect to the current module.
+ *
+ * This is just a simple wrapper class around an import path. It is used in the
+ * `GeneratedFile` to keep track of which import statements need to be included
+ * in the output of the generated file as well as how a `JSIdent` needs to be
+ * referred to in the output the generated file.
+ *
+ * Example:
+ * Use the `JSImportPath` class to take advantage of the import resolution
+ * mechanism provided by the `GeneratedFile`.
+ *
+ * ```typescript
+ * import * as protogen from "protogenerate";
+ * grpcPkg = protogen.JSImportPath("", "@grpc/grpc-js", "");
+ * // g is of type GeneratedFile
+ * g.P("class MyService {")
+ * g.P("constructor() {")
+ * g.P("this.channel = new", grpcPkg.ident("Channel"), "('localhost:9090');")
+ * g.P("}")
+ * g.P()
+ * // ..
+ * g.P("}")
+ * ```
+ *
+ * That way the `@grpc/grpc-js` package will be automatically added to the import
+ * list of `g`.
+ */
+export class JSImportPath {
+  /**
+   * Create a new JavaScript import path.
+   *
+   * @param path The local import path that is the relative path to the module
+   * import path refers to without an extension.
+   * @param npmModule Optional. The npm package name if the import path refers
+   * to a npm package.
+   * @param npmPathUnderModule Optional. The path under the npm package the
+   * module can be imported from. E.g. for the npm package  "google-protobuf" a
+   * `npmPathUnderPackage` of "google/protobuf/timestamp_pb" might be necessary
+   * to import any identifiers in the "timestamp_pb.js" module as these are not
+   * exported in the top-level index.js file.
+   * The complete import path necessary to import the `Timestamp` identifer is
+   * `google-protobuf/google/protobuf/timestamp_pb` as in
+   * `import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";`.
+   */
+  constructor(
+    public readonly path: string,
+    public readonly npmModule: string,
+    public readonly npmPathUnderModule: string = ""
+  ) {}
+
+  ident(name: string): JSIdent {
+    return new JSIdent(this, name);
+  }
+
+  equals(other: JSImportPath): boolean {
+    return this.npmModule == other.npmModule && this.path == other.path;
+  }
+}
+
+/**
+ * An identifier for a JavaScript class, function, variable or constant (or a
+ * TypeScript type or interface).
+ */
+export class JSIdent {
+  /**
+   * The import path of the identifier.
+   */
+  importPath: JSImportPath;
+
+  /**
+   * Name of the class, function, variable or constant.
+   */
+  name: string;
+
+  constructor(importPath: JSImportPath, name: string) {
+    this.importPath = importPath;
+    this.name = name;
   }
 }
 
