@@ -151,12 +151,18 @@ export class Registry {
    * Get messages by proto package.
    *
    * @param protoPackage The proto package to get messages for.
+   * @param topLevelOnly If `true`, only top-level messages are returned.
+   * Otherwise nested messages are included.
    * @returns The messages.
    */
-  messagesByPackage(protoPackage: string): Message[] {
+  messagesByPackage(
+    protoPackage: string,
+    topLevelOnly: boolean = false
+  ): Message[] {
     let messages = [];
     for (let m of this.messagesByName.values()) {
-      if (m.parentFile.packageName == protoPackage) {
+      let include = m.parent == null || !topLevelOnly;
+      if (m.parentFile.packageName == protoPackage && include) {
         messages.push(m);
       }
     }
@@ -167,12 +173,15 @@ export class Registry {
    * Get enums by proto package.
    *
    * @param protoPackage The proto package to get enums for.
+   * @param topLevelOnly If `true`, only top-level enums are returned. Otherwise
+   * nested enums are included.
    * @returns The enums.
    */
-  enumsByPackage(protoPackage: string): Enum[] {
+  enumsByPackage(protoPackage: string, topLevelOnly: boolean = false): Enum[] {
     let enums = [];
     for (let e of this.enumsByName.values()) {
-      if (e.parentFile.packageName == protoPackage) {
+      let include = e.parent == null || !topLevelOnly;
+      if (e.parentFile.packageName == protoPackage && include) {
         enums.push(e);
       }
     }
