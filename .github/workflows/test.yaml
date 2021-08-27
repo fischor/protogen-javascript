@@ -38,5 +38,8 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: npm ci --ignore-scripts
 
+      - name: Run build
+        run: npm run build
+
       - name: Run tests
         run: npm run test
