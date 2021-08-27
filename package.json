@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
+    "lint": "prettier --check src/**.ts test/**.ts",
     "clean": "rm -rf lib",
     "build": "npm run clean && tsc",
     "test": "npm run build && mkdir -p testout && chmod +x lib/test/generator.js && chmod +x lib/test/imports/generator.js && mocha lib/test --recursive --exit",
