@@ -1,3 +1,5 @@
+name: Prettier
+
 on:
   push:
     branches: [main, gh-actions]
