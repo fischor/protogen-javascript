@@ -8,7 +8,7 @@
     "lint": "prettier --check src/**.ts test/**.ts",
     "clean": "rm -rf lib",
     "build": "tsc",
-    "test": "mkdir -p testout && chmod +x lib/test/generator.js && chmod +x lib/test/imports/generator.js && mocha lib/test --recursive --exit",
+    "test": "mkdir -p testout && chmod +x lib/test/generator.js && chmod +x lib/test/imports/generator.js && mocha lib/test/*.spec.js lib/test/**/*.spec.js --exit",
     "prepack": "npm run build",
     "docs": "typedoc src/index.ts"
   },
