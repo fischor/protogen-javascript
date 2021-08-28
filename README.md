@@ -1,6 +1,6 @@
 # `protogen`
 
-Package `protogen` makes writing `protoc` plugins easier.
+Package `protogen` makes writing `protoc` plugins easy.
 Working with the raw protobuf descriptor messages can be cumbersome.
 `protogen` resolves and links the dependencies and references between the raw Protobuf descriptors and turns them into their corresponding `protogen` classes that are easier to work with.
 It also provides mechanisms that are espacially useful to generate JavaScript/TypeScript code like dealing with module imports.
