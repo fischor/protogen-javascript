@@ -29,35 +29,36 @@ import * as protogen from "@protogen/protogen";
 new protogen.Options().run((gen: protogen.Plugin) => {
   for (let file of gen.filesToGenerate) {
     let g = gen.newGeneratedFile(
-      file.name.replace(".proto", ".ts"), 
-      f.jsImportPath
+      file.name.replace(".proto", ".ts"),
+      file.jsImportPath
     );
     g.P("# Generated code ahead.");
     g.P();
     g.printImports();
     g.P();
     for (let message of file.messages) {
-      g.P("export class ", message.jsIdent.name, "{")
+      g.P("export class ", message.jsIdent.name, "{");
       for (let field of message.fields) {
-        // generate code for the field
-      }
-      g.P("}")
-      g.P()
-    }
-    for (let service of file.services) {
-      g.P("export class ", service.jsIdent.name, "Client {")
-      g.P("constructor (private host: string) {}")
-      for (let method of service.methods) {
-        g.P(method.jsName, "(request: ", method.input.jsIdent, "): ", message.output.jsIdent, " {");
-        // generate the method implementation
-        g.P("}");
-        g.P()
+        // TODO: generate code for the field
       }
       g.P("}");
-      g.P()
+      g.P();
+    }
+    for (let service of file.services) {
+      g.P("export class ", service.jsIdent.name, "Client {");
+      g.P("constructor (private host: string) {}");
+      for (let method of service.methods) {
+        // prettier-ignore
+        g.P(method.jsName, "(request: ", method.input.jsIdent, "): ", method.output.jsIdent, "{");
+        // TODO: generate the method implementation
+        g.P("}");
+        g.P();
+      }
+      g.P("}");
+      g.P();
     }
   }
-})
+});
 ```
 
 # Misc
