@@ -34,8 +34,9 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm whoami
 
-      # "npm run publish" runs "npm run pack" that runs a build (see prepack).
+      # "npm publish" runs "npm pack" that runs, because of the prepack script
+      # in package.json, a clean build.
       - name: Publish to npm
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm run publish
+        run: npm publish
