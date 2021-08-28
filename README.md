@@ -10,7 +10,7 @@ It also provides mechanisms that are espacially useful to generate JavaScript/Ty
 Package `protogen` is available via npm. To install run:
 
 ```
-npm install @protogen/protogen
+npm install @protogenjs/protogen
 ```
 
 ## API
@@ -24,7 +24,7 @@ You can see these in action in the following example plugin:
 #!/usr/bin/env node
 /** An example plugin. */
 
-import * as protogen from "@protogen/protogen";
+import * as protogen from "@protogenjs/protogen";
 
 new protogen.Options().run((gen: protogen.Plugin) => {
   for (let file of gen.filesToGenerate) {
