@@ -1,6 +1,6 @@
 {
   "name": "@protogenjs/protogen",
-  "version": "0.1.1-alpha.1",
+  "version": "0.1.0",
   "description": "The protogen package makes it easy to write protoc plugins in JavaScript/Typescript",
   "author": "fischor <fischor.sh@gmail.com>",
   "license": "ISC",
