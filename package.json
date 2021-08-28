@@ -1,21 +1,13 @@
 {
-  "name": "protogenerate",
+  "name": "@protogenjs/protogen",
   "version": "0.1.1-alpha.1",
   "description": "The protogen package makes it easy to write protoc plugins in JavaScript/Typescript",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "scripts": {
-    "lint": "prettier --check src/**.ts test/**.ts",
-    "clean": "rm -rf lib",
-    "build": "tsc",
-    "test": "mkdir -p testout && chmod +x lib/test/generator.js && chmod +x lib/test/imports/generator.js && mocha lib/test/*.spec.js lib/test/**/*.spec.js --exit",
-    "prepack": "npm run build",
-    "docs": "typedoc src/index.ts"
-  },
-  "files": [
-    "lib"
-  ],
+  "author": "fischor <fischor.sh@gmail.com>",
   "license": "ISC",
+  "homepage": "https://github.com/fischor/protogen-javascript",
+  "repository": "github:fischor/protogen-javascript",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
   "dependencies": {
     "google-protobuf": "^3.17.3"
   },
@@ -27,5 +19,20 @@
     "prettier": "^2.3.2",
     "typedoc": "^0.21.5",
     "typescript": "^4.3.5"
+  },
+  "files": [
+    "lib/src/",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "lint": "prettier --check src/**.ts test/**.ts",
+    "clean": "rm -rf lib",
+    "build": "tsc",
+    "test": "mkdir -p testout && chmod +x lib/test/generator.js && chmod +x lib/test/imports/generator.js && mocha lib/test/*.spec.js lib/test/**/*.spec.js --exit",
+    "prepack": "npm run clean && npm run build",
+    "docs": "typedoc src/index.ts"
   }
 }
